@@ -1,16 +1,12 @@
 # local_LLM_workspace
-Running a 4B LLM fully offline on 16 GB RAM using Ollama + Docker + Open WebUI and CPU-only which  is benchmarked across 7 real study tasks.
+Running a 4B LLM fully offline on 16 GB RAM using Ollama + Docker + Open WebUI, with CPU-only inference benchmarked across 7 real study tasks.
 
 
 ## Why I Built This
 
-My internet in the evenings and afternoons is around 200 KB/s hich is  too slow and unstable to rely on cloud AI reliably.
+So I started asking: Which model can actually be useful for this? Not just run and eat my RAM. Can I actually study with it? Debug with it? Understand complex concepts such as transformers with it?
 
-I wanted a setup where I could ask questions about my coursework, debug code, and study AI concepts without needing a working connection.
-
-So I started asking: Which model can actually be useful for this? Not just run eating my ram. Can I actually study with it? Debug with it? Understand complex concepts such as transformers with it?
-
-Instead of assuming yes or no, I measured it started with qwen3:8b but it took so much time to download then I switched to qwen3.5:4b and I don't regret it.
+Instead of assuming yes or no, I measured it. I started with Qwen3:8B, but it took too long to download, so I switched to Qwen3.5:4B and I don't regret it.
 
 ---
 
@@ -19,12 +15,13 @@ Instead of assuming yes or no, I measured it started with qwen3:8b but it took s
 ```
 Windows 11
 │
-├── Ollama (Port 11434) ──── Qwen3.5:4B (CPU-only, 0% GPU)
+├── Ollama (Port 11434) ──── Qwen3.5:4B (CPU-only, 0% GPU compute)
 │
 └── Docker Desktop + WSL2
          └── Open WebUI (Port 3000)
                   └── connects to Ollama on host
 ```
+<p align="center"> <img src="03_openwebui_running.png" width="850"> </p>
 
 Inference path: `You → Open WebUI → Ollama → Qwen3.5:4B → CPU → Response`
 
@@ -38,8 +35,12 @@ No internet required after this setup, without any API key and no data leaving t
 |---|---|
 | CPU | AMD Ryzen 7 7735HS (8 cores / 16 logical processors) |
 | RAM | 16 GB (usable ~14.8 GB) |
-| GPU | Integrated AMD Radeon — **0% used during inference** |
+| GPU | Integrated AMD Radeon — **0% compute during inference** |
 | OS | Windows 11 + Docker Desktop + WSL2 |
+
+<p align="center">
+  <img src="01_hardware_specs.png" width="850">
+</p>
 
 ---
 
@@ -54,26 +55,28 @@ No internet required after this setup, without any API key and no data leaving t
 | RAM during active inference | ~13–14 GB (85–88%) |
 | Inference device | CPU only |
 
+<p align="center">
+  <img src="02_ollama_model.png" width="850">
+</p>
+
 ---
 
 ## The Most Interesting Finding
 
-I expected thinking mode ON to be slower because each token would be slower but I was wrong.
+<p align="center">
+  <img src="06_thinking_on_1.png" width="48%">
+  <img src="07_thinking_off.png" width="48%">
+</p>
 
-| Mode | Token speed |
-|------|------------|
-| Thinking OFF | ~3.5 tok/s |
-| Thinking ON | ~3.3 tok/s |
+I expected thinking mode ON to be slower because the model would do more reasoning. What surprised me was how large the difference became on my CPU-only setup.
 
-The raw generation rate barely changed.
+With thinking OFF, simple study tasks completed in minutes. With thinking-ON, one controlled API test took **~100 minutes** to complete.
 
-But thinking ON took **~100 minutes** for a task that thinking OFF completed in under 2 minutes.
+The important lesson was that thinking mode isn't simply "the same answer at a slightly slower token rate." The model can perform substantially more internal computation before producing its final answer.
 
-The reason: thinking ON generated ~2,004 reasoning tokens — internal chain-of-thought before the answer. At 3.3 tok/s on CPU, 2,000 tokens is a long time.
+On a CPU-only 16 GB laptop, that extra reasoning can make extended thinking impractical for routine study tasks.
 
-**The bottleneck wasn't speed. It was how many tokens the model decided to generate.**
-
-On this hardware, for any practical study task: thinking OFF is the right default.
+For this workspace, I therefore use **thinking OFF as the default** and reserve thinking mode for problems where additional reasoning is actually worth the extra computation.
 
 ---
 
@@ -93,7 +96,29 @@ Wi-Fi disconnected. `Test-NetConnection 1.1.1.1` returned `False`. Thinking OFF.
 
 **Total: 14m 14s. Average: ~2m 02s per task.**
 
-These are real workloads from my AI engineering study sessions not artificial prompts chosen to make the numbers look good.
+### Evidence
+
+<p align="center">
+  <img src="10_offline_dictionaries.png" width="48%">
+  <img src="11_offline_code_generation.png" width="48%">
+</p>
+
+<p align="center">
+  <img src="12_offline_debugging.png" width="48%">
+  <img src="13_offline_transformer.png" width="48%">
+</p>
+
+<p align="center">
+  <img src="14_offline_tensor_reasoning.png" width="48%">
+  <img src="15_offline_summarization.png" width="48%">
+</p>
+
+#### Softmax Study
+
+<p align="center">
+  <img src="16a_offline_softmax_p1.png" width="48%">
+  <img src="16b_offline_softmax_p2.png" width="48%">
+</p>
 
 ---
 
@@ -104,11 +129,30 @@ These are real workloads from my AI engineering study sessions not artificial pr
 - RAM: ~85–88%
 - GPU: ~2–3% (integrated, not doing compute)
 
+<p align="center">
+  <img src="04_cpu_only_inference.png" width="850">
+</p>
+
+<p align="center">
+  <img src="05_resource_during_inference_1.png" width="48%">
+  <img src="05_resource_during_inference_2.png" width="48%">
+</p>
+
+### Offline Verification
+
+<p align="center">
+  <img src="17_offline_proof_1.png" width="48%">
+  <img src="17_offline_proof_2.png" width="48%">
+</p>
+
+---
+
 **After generation finishes:**
 - CPU drops back to ~2%
 - RAM stays high — model stays loaded
 
 You can't comfortably run heavy applications while it's generating. Browser + IDE + Ollama works. Anything heavier starts competing for RAM.
+
 
 ---
 
@@ -123,6 +167,20 @@ You can't comfortably run heavy applications while it's generating. Browser + ID
 - Softmax explanation had an incorrect statement about gradient behavior
 
 I'm not hiding these. This benchmark measures **whether the setup works for practical study**, not whether every answer is correct. Local LLMs still need verification — that's part of what I learned by actually using it.
+
+---
+
+## Real-World Study Test
+
+The benchmark showed that the setup could handle individual tasks offline. I also tested the workflow through the actual Open WebUI interface rather than only through the terminal.
+
+The test used a controlled prompt asking Qwen3.5:4B to explain Python dictionaries in 8 concise numbered points with examples and a word limit.
+
+<p align="center">
+  <img src="Controlled Open WebUI test.png" width="850">
+</p>
+
+The response was generated locally through Open WebUI → Ollama → Qwen3.5:4B, without requiring an internet connection.
 
 ---
 
@@ -187,9 +245,9 @@ ollama run qwen3.5:4b
 
 ## What I Actually Learned
 
-The setup works ~3.5 tok/s on CPU, under 2 minutes average per study task and that's usable.
+The setup works on CPU-only hardware, and for my tested study tasks the average response time was ~2m 02s with thinking OFF.
 
-The interesting finding wasn't the benchmark numbers. It was understanding *why* thinking mode was slow. I assumed token rate was the variable. It wasn't. That kind of misunderstanding only shows up when you measure.
+The interesting finding wasn't a particular token-speed number. It was understanding why thinking mode became impractical on this hardware.
 
 The limitations matter too. Terminal is the wrong interface for math. The model truncates occasionally. Factual errors appear. These aren't reasons to not use local LLMs — they're things to know going in.
 
@@ -197,8 +255,5 @@ The original problem is solved: I can study and debug without needing internet.
 
 ---
 
-
-
----
 
 *Started because my evening internet was 200 KB/s and I needed to study anyway.*
