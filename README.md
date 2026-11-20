@@ -15,7 +15,7 @@ Instead of assuming yes or no, I measured it. I started with Qwen3:8B, but it to
 ```
 Windows 11
 │
-├── Ollama (Port 11434) ──── Qwen3.5:4B (CPU-only, 0% GPU compute)
+├── Ollama (Port 11434) ──── Qwen3.5:4B ((CPU-only, GPU not used for inference)
 │
 └── Docker Desktop + WSL2
          └── Open WebUI (Port 3000)
@@ -35,7 +35,7 @@ No internet required after this setup, without any API key and no data leaving t
 |---|---|
 | CPU | AMD Ryzen 7 7735HS (8 cores / 16 logical processors) |
 | RAM | 16 GB (usable ~14.8 GB) |
-| GPU | Integrated AMD Radeon — **0% compute during inference** |
+| GPU | Integrated AMD Radeon — **not used for inference, (~2–3% background load)** |
 | OS | Windows 11 + Docker Desktop + WSL2 |
 
 <p align="center">
